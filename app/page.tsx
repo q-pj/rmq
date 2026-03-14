@@ -1,7 +1,7 @@
 'use client'
-import { createClient } from "@/lib/supabase/client";
-import { useState } from "react";
-import { useEffect } from "react";
+import { createClient } from '@/lib/supabase/client';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 const thStyle: React.CSSProperties = {
   textAlign: 'left',
@@ -24,15 +24,27 @@ type Item = {
 export default function Home() {
   const [items, setItems] = useState<Item[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    async function fetchItems(){
+    async function init(){
       const supabase = createClient();
+
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push('/login')
+        return
+      }
+
       const { data } = await supabase.from('pricelist').select('*')
       setItems(data ?? [])
+      setLoading(false)
     }
-    fetchItems()
+    init()
   }, [])
+
+  if(loading) return null
 
   const filtered = items.filter(item =>
   item.item_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
