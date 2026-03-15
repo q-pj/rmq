@@ -3,17 +3,6 @@ import { createClient } from '@/lib/supabase/client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-const thStyle: React.CSSProperties = {
-  textAlign: 'left',
-  padding: '8px',
-  borderBottom: '2px solid #ccc'
-}
-
-const tdStyle: React.CSSProperties = {
-  padding: '8px',
-  borderBottom: '1px solid #eee'
-}
-
 type Item = {
   id: number
   item_name: string
@@ -69,17 +58,17 @@ export default function Home() {
     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
       <thead>
         <tr>
-          <th style={thStyle}>Item Name</th>
-          <th style={thStyle}>Category</th>
-          <th style={thStyle}>Price</th>
+          <th>Item Name</th>
+          <th>Category</th>
+          <th>Price</th>
         </tr>
       </thead>
       <tbody>
         {filtered.map(item => (
           <tr key={item.id}>
-            <td style={tdStyle}>{item.item_name}</td>
-            <td style={tdStyle}>{item.category}</td>
-            <td style={tdStyle}>₱{item.price}</td>
+            <td>{item.item_name}</td>
+            <td>{item.category}</td>
+            <td>₱{item.price}</td>
           </tr>
         ))}
       </tbody>

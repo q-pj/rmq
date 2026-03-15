@@ -61,6 +61,7 @@ export default function Login() {
         placeholder="Enter password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
         disabled={isLoading}
         style={{ width: '100%', padding: '8px', marginBottom: '8px', boxSizing: 'border-box' }}
       />
