@@ -8,8 +8,11 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
 
   async function handleLogin() {
+    setIsLoading(true)
+    setError('')
     const supabase = createClient()
 
     // Try employee account first
@@ -31,6 +34,7 @@ export default function Login() {
     // If both fail, show error
     if (result.error) {
       setError('Wrong password')
+      setIsLoading(false)
       return
     }
 
@@ -57,6 +61,7 @@ export default function Login() {
         placeholder="Enter password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
+        disabled={isLoading}
         style={{ width: '100%', padding: '8px', marginBottom: '8px', boxSizing: 'border-box' }}
       />
 
@@ -64,9 +69,10 @@ export default function Login() {
 
       <button
         onClick={handleLogin}
+        disabled={isLoading}
         style={{ width: '100%', padding: '10px', backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: '4px' }}
       >
-        Login
+        {isLoading ? 'Logging in...' : 'Login'}
       </button>
     </main>
   )
