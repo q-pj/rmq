@@ -74,8 +74,8 @@ export default function Home() {
 
   // Sort: pinned items first, then the rest
   const sorted = [
-    ...items.filter(item => item.is_pinned),
-    ...items.filter(item => !item.is_pinned)
+    ...items.filter(item => item.is_pinned === true).sort((a, b) => a.item_name.localeCompare(b.item_name)),
+    ...items.filter(item => item.is_pinned !== true).sort((a, b) => a.item_name.localeCompare(b.item_name))
   ]
 
   // Filter by search query
