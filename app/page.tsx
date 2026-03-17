@@ -21,6 +21,12 @@ export default function Home() {
   const router = useRouter()
 
   useEffect(() => {
+    if (!loading) {
+      localStorage.setItem('pricelist', JSON.stringify(items))
+    }
+  }, [items, loading])
+
+  useEffect(() => {
     async function init() {
       const supabase = createClient()
 
@@ -73,9 +79,26 @@ export default function Home() {
   }, [])
 
   // Sort: pinned items first, then the rest
+  // const sorted = [
+  //   ...items.filter(item => item.is_pinned === true).sort((a, b) => a.item_name.localeCompare(b.item_name)),
+  //   ...items.filter(item => item.is_pinned !== true).sort((a, b) => a.item_name.localeCompare(b.item_name))
+  // ]
+
+  function sortItems(a: Item, b: Item) {
+    const catA = a.category
+    const catB = b.category
+
+    if (catA === null && catB !== null) return 1
+    if (catA !== null && catB === null) return -1
+    if (catA !== null && catB !== null && catA !== catB) {
+      return catA.localeCompare(catB)
+    }
+    return a.item_name.localeCompare(b.item_name)
+  }
+
   const sorted = [
-    ...items.filter(item => item.is_pinned === true).sort((a, b) => a.item_name.localeCompare(b.item_name)),
-    ...items.filter(item => item.is_pinned !== true).sort((a, b) => a.item_name.localeCompare(b.item_name))
+    ...items.filter(item => item.is_pinned === true).sort(sortItems),
+    ...items.filter(item => item.is_pinned !== true).sort(sortItems)
   ]
 
   // Filter by search query
