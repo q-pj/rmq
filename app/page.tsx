@@ -323,6 +323,7 @@ export default function Home() {
             <label style={labelStyle}>Price</label>
             <input
               type="number"
+              inputMode="decimal"
               value={selectedItem.price === 0 ? '' : selectedItem.price}
               onChange={(e) => setSelectedItem({ ...selectedItem, 
               price: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
@@ -394,6 +395,7 @@ export default function Home() {
           <label style={labelStyle}>Price *</label>
           <input
             type="number"
+            inputMode="decimal"
             value={newItem.price}
             onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
             style={{ marginBottom: '4px' }}
