@@ -110,7 +110,7 @@ export default function Home() {
     const updatedCategory = selectedItem.category?.trim() === '' ? null : selectedItem.category  // 👈 add this
 
     await supabase.from('pricelist').update({
-      category: updatedCategory,  // 👈 changed from selectedItem.category
+      category: updatedCategory,
       price: selectedItem.price,
     }).eq('id', selectedItem.id)
 
@@ -154,6 +154,7 @@ export default function Home() {
 
   async function handleDelete() {
     if (!selectedItem) return
+    setIsDeleting(true)
     const supabase = createClient()
 
     await supabase.from('pricelist').delete().eq('id', selectedItem.id)
@@ -206,12 +207,6 @@ export default function Home() {
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   )
-
-  // Reset to page 1 when search query changes
-  function handleSearch(e: React.ChangeEvent<HTMLInputElement>) {
-    setSearchQuery(e.target.value)
-    setCurrentPage(1)
-  }
 
   if (loading) return null
 
