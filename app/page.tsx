@@ -108,12 +108,13 @@ export default function Home() {
       }
     }
 
+    window.addEventListener('focus', handleVisibilityChange)
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
+      window.removeEventListener('focus', handleVisibilityChange)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-
   }, [])
 
   async function handleUpdate() {
