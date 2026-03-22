@@ -99,6 +99,21 @@ export default function Home() {
         }
     }
     init()
+
+    async function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        const supabase = createClient()
+        const { data } = await supabase.from('pricelist').select('*')
+        setItems(data ?? [])
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+
   }, [])
 
   async function handleUpdate() {
