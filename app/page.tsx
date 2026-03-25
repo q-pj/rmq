@@ -137,13 +137,13 @@ export default function Home() {
     setSelectedItem(null)
   }
 
-  async function handleAdd(){
+  async function handleAdd() {
     const errors = { item_name: '', price: '' }
 
-    if (newItem.item_name.trim() === ''){
+    if (newItem.item_name.trim() === '') {
       errors.item_name = 'Item name is required'
     }
-    if(newItem.price === '' || parseFloat(newItem.price) <= 0) {
+    if (newItem.price === '' || parseFloat(newItem.price) <= 0) {
       errors.price = 'Price must be greater than 0'
     }
 
@@ -154,17 +154,18 @@ export default function Home() {
 
     const supabase = createClient()
 
-    const { data } = await supabase.from('pricelist').insert({
+    await supabase.from('pricelist').insert({
       item_name: newItem.item_name,
       category: newItem.category || null,
       price: parseFloat(newItem.price),
     })
 
-    if (data) {
-      setItems([...items, data])
-    }
+    const { data } = await supabase.from('pricelist').select('*')
+    setItems(data ?? [])
 
-    setNewItem({ item_name: '', category: '', price: ''})
+    setNewItem({ item_name: '', category: '', price: '' })
+    setAddErrors({ item_name: '', price: '' })
+    setIsSubmitting(false)
     setIsAdding(false)
   }
 
@@ -224,7 +225,21 @@ export default function Home() {
     currentPage * ITEMS_PER_PAGE
   )
 
-  if (loading) return null
+if (loading) return (
+  <div style={{
+    position: 'fixed',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'var(--background)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '16px',
+  }}>
+    <h1 style={{ fontSize: '48px', fontWeight: 'bold' }}>RMQ</h1>
+    <div className="spinner" />
+  </div>
+)
 
   return (
     <main style={{ padding: '16px' }}>
@@ -254,29 +269,58 @@ export default function Home() {
 
     {/* Search Bar */}
     <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-    <input
-      type="text"
-      placeholder="Search items..."
-      value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      style={{ marginBottom: 0, flex: 1 }}
-    />
-    {searchQuery && (
-      <button
-        onClick={() => setSearchQuery('')}
-        style={{
-          width: 'auto',
-          padding: '0 16px',
-          backgroundColor: 'var(--border)',
-          color: 'var(--text-primary)',
-          borderRadius: '8px',
-          flexShrink: 0,
+      <input
+        type="text"
+        placeholder="Search items..."
+        value={searchQuery}
+        onChange={(e) => {
+          setSearchQuery(e.target.value)
+          setCurrentPage(1)
         }}
-      >
-    Clear
-    </button>
-  )}
-</div>
+        style={{ marginBottom: 0, flex: 1 }}
+      />
+      {searchQuery && (
+        <button
+          onClick={() => {
+            setSearchQuery('')
+            setCurrentPage(1)
+          }}
+          style={{
+            width: 'auto',
+            padding: '0 16px',
+            backgroundColor: 'var(--border)',
+            color: 'var(--text-primary)',
+            borderRadius: '8px',
+            flexShrink: 0,
+          }}
+        >
+          Clear
+        </button>
+      )}
+    </div>
+
+    {/* Pagination top */}
+      {totalPages > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+          <button
+            onClick={() => setCurrentPage(p => p - 1)}
+            disabled={currentPage === 1}
+            style={{ width: 'auto', padding: '8px 16px' }}
+          >
+            ← Prev
+          </button>
+          <span style={{ color: 'var(--text-secondary)' }}>
+            {currentPage} / {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage(p => p + 1)}
+            disabled={currentPage === totalPages}
+            style={{ width: 'auto', padding: '8px 16px' }}
+          >
+            Next →
+          </button>
+        </div>
+      )}
 
       {/* Price List Table */}
       <table>
@@ -428,9 +472,9 @@ export default function Home() {
       </div>
     )}
 
-      {/* Pagination */}
+      {/* Pagination bottom */}
       {totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', marginTop: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', marginTop: '16px', marginBottom: '30px' }}>
           <button
             onClick={() => setCurrentPage(p => p - 1)}
             disabled={currentPage === 1}
