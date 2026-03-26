@@ -43,10 +43,9 @@ export default function Home() {
     parseFloat(newItem.price) > 0
   
   useEffect(() => {
-    let channel: ReturnType<typeof supabase.channel> | null = null
-    const supabase = createClient()
-
     async function init() {
+      const supabase = createClient()
+
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push('/login')
@@ -68,7 +67,7 @@ export default function Home() {
         setLoading(false)
       }
 
-      channel = supabase
+      const channel = supabase
         .channel('pricelist-changes')
         .on('postgres_changes', {
           event: '*',
@@ -86,12 +85,23 @@ export default function Home() {
             setItems(prev => prev.filter(item => item.id !== (payload.old as Item).id))
           }
         }).subscribe()
+
+      return channel
     }
 
-    init()
+    let cleanup: (() => void) | null = null
+    init().then(channel => {
+      if (channel) {
+        cleanup = () => {
+          const supabase = createClient()
+          supabase.removeChannel(channel)
+        }
+      }
+    })
 
     async function handleVisibilityChange() {
       if (document.visibilityState === 'visible') {
+        const supabase = createClient()
         const { data } = await supabase.from('pricelist').select('*')
         setItems(data ?? [])
       }
@@ -100,9 +110,8 @@ export default function Home() {
     window.addEventListener('focus', handleVisibilityChange)
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
-    // 👇 Now both channel and event listeners are cleaned up properly
     return () => {
-      if (channel) supabase.removeChannel(channel)
+      cleanup?.()
       window.removeEventListener('focus', handleVisibilityChange)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
