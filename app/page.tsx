@@ -43,6 +43,12 @@ export default function Home() {
     parseFloat(newItem.price) > 0
   
   useEffect(() => {
+    if (!loading) {
+      localStorage.setItem('pricelist', JSON.stringify(items))
+    }
+  }, [items, loading])
+
+  useEffect(() => {
     async function init() {
       const supabase = createClient()
 
@@ -55,18 +61,20 @@ export default function Home() {
       setIsManager(user.email === 'quintelapj+manager@gmail.com')
 
       const cached = localStorage.getItem('pricelist')
-      if (cached) {
+      if (cached){
         setItems(JSON.parse(cached))
         setLoading(false)
       }
 
+      // initial fetch
       const { data } = await supabase.from('pricelist').select('*')
       if (data) {
-        setItems(data)
+        setItems(data ?? [])
         localStorage.setItem('pricelist', JSON.stringify(data))
         setLoading(false)
       }
 
+      // Real time listener
       const channel = supabase
         .channel('pricelist-changes')
         .on('postgres_changes', {
@@ -74,30 +82,24 @@ export default function Home() {
           schema: 'public',
           table: 'pricelist'
         }, (payload) => {
-          if (payload.eventType === 'INSERT') {
+          if (payload.eventType === 'INSERT'){
             setItems(prev => [...prev, payload.new as Item])
           }
-          if (payload.eventType === 'UPDATE') {
-            setItems(prev => prev.map(item =>
+          if (payload.eventType === 'UPDATE'){
+            setItems(prev => prev.map(item => 
               item.id === (payload.new as Item).id ? payload.new as Item : item))
           }
-          if (payload.eventType === 'DELETE') {
+          if (payload.eventType === 'DELETE'){
             setItems(prev => prev.filter(item => item.id !== (payload.old as Item).id))
           }
         }).subscribe()
 
-      return channel
-    }
-
-    let cleanup: (() => void) | null = null
-    init().then(channel => {
-      if (channel) {
-        cleanup = () => {
-          const supabase = createClient()
+        // Cleanup on unmount
+        return () => {
           supabase.removeChannel(channel)
         }
-      }
-    })
+    }
+    init()
 
     async function handleVisibilityChange() {
       if (document.visibilityState === 'visible') {
@@ -111,7 +113,6 @@ export default function Home() {
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
-      cleanup?.()
       window.removeEventListener('focus', handleVisibilityChange)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
@@ -272,7 +273,7 @@ if (loading) return (
       <input
         ref={searchRef}
         type="text"
-        placeholder="Search"
+        placeholder="Search items..."
         value={searchQuery}
         onChange={(e) => {
           setSearchQuery(e.target.value)
