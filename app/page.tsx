@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -35,6 +35,7 @@ export default function Home() {
   const [toast, setToast] = useState<string | null> (null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
+  const searchRef = useRef<HTMLInputElement>(null)
 
   const isAddValid =
     newItem.item_name.trim() !== '' &&
@@ -42,15 +43,10 @@ export default function Home() {
     parseFloat(newItem.price) > 0
   
   useEffect(() => {
-    if (!loading) {
-      localStorage.setItem('pricelist', JSON.stringify(items))
-    }
-  }, [items, loading])
+    let channel: ReturnType<typeof supabase.channel> | null = null
+    const supabase = createClient()
 
-  useEffect(() => {
     async function init() {
-      const supabase = createClient()
-
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push('/login')
@@ -60,49 +56,42 @@ export default function Home() {
       setIsManager(user.email === 'quintelapj+manager@gmail.com')
 
       const cached = localStorage.getItem('pricelist')
-      if (cached){
+      if (cached) {
         setItems(JSON.parse(cached))
         setLoading(false)
       }
 
-      // initial fetch
       const { data } = await supabase.from('pricelist').select('*')
       if (data) {
-        setItems(data ?? [])
+        setItems(data)
         localStorage.setItem('pricelist', JSON.stringify(data))
         setLoading(false)
       }
 
-      // Real time listener
-      const channel = supabase
+      channel = supabase
         .channel('pricelist-changes')
         .on('postgres_changes', {
           event: '*',
           schema: 'public',
           table: 'pricelist'
         }, (payload) => {
-          if (payload.eventType === 'INSERT'){
+          if (payload.eventType === 'INSERT') {
             setItems(prev => [...prev, payload.new as Item])
           }
-          if (payload.eventType === 'UPDATE'){
-            setItems(prev => prev.map(item => 
+          if (payload.eventType === 'UPDATE') {
+            setItems(prev => prev.map(item =>
               item.id === (payload.new as Item).id ? payload.new as Item : item))
           }
-          if (payload.eventType === 'DELETE'){
+          if (payload.eventType === 'DELETE') {
             setItems(prev => prev.filter(item => item.id !== (payload.old as Item).id))
           }
         }).subscribe()
-
-        // Cleanup on unmount
-        return () => {
-          supabase.removeChannel(channel)
-        }
     }
+
     init()
 
     async function handleVisibilityChange() {
       if (document.visibilityState === 'visible') {
-        const supabase = createClient()
         const { data } = await supabase.from('pricelist').select('*')
         setItems(data ?? [])
       }
@@ -111,7 +100,9 @@ export default function Home() {
     window.addEventListener('focus', handleVisibilityChange)
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
+    // 👇 Now both channel and event listeners are cleaned up properly
     return () => {
+      if (channel) supabase.removeChannel(channel)
       window.removeEventListener('focus', handleVisibilityChange)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
@@ -270,8 +261,9 @@ if (loading) return (
     {/* Search Bar */}
     <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
       <input
+        ref={searchRef}
         type="text"
-        placeholder="Search items..."
+        placeholder="Search"
         value={searchQuery}
         onChange={(e) => {
           setSearchQuery(e.target.value)
@@ -284,6 +276,7 @@ if (loading) return (
           onClick={() => {
             setSearchQuery('')
             setCurrentPage(1)
+            searchRef.current?.focus()
           }}
           style={{
             width: 'auto',
