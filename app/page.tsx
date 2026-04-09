@@ -68,7 +68,6 @@ export default function Home() {
         setLoading(false)
       }
 
-      // initial fetch
       const { data } = await supabase.from('pricelist').select('*')
       if (data) {
         setItems(data ?? [])
@@ -76,7 +75,6 @@ export default function Home() {
         setLoading(false)
       }
 
-      // Real time listener
       const channel = supabase
         .channel('pricelist-changes')
         .on('postgres_changes', {
@@ -96,7 +94,6 @@ export default function Home() {
           }
         }).subscribe()
 
-        // Cleanup on unmount
         return () => {
           supabase.removeChannel(channel)
         }
@@ -126,7 +123,7 @@ export default function Home() {
     setIsUpdating(true)
     const supabase = createClient()
 
-    const updatedCategory = selectedItem.category?.trim() === '' ? null : selectedItem.category  // 👈 add this
+    const updatedCategory = selectedItem.category?.trim() === '' ? null : selectedItem.category
 
     await supabase.from('pricelist').update({
       category: updatedCategory,
@@ -144,7 +141,7 @@ export default function Home() {
 
 
     setItems(items.map(item =>
-      item.id === selectedItem.id ? { ...item, ...selectedItem, category: updatedCategory } : item  // 👈 updated
+      item.id === selectedItem.id ? { ...item, ...selectedItem, category: updatedCategory } : item
     ))
     setIsUpdating(false)
     setSelectedItem(null)
@@ -195,7 +192,6 @@ export default function Home() {
     showToast('Deleted successfully')
   }
 
-
   function openAddModal(){
     setNewItem({ item_name: '', category: '', price: '' })
     setAddErrors({ item_name: '', price: '' })
@@ -225,7 +221,6 @@ export default function Home() {
     ...items.filter(item => item.is_pinned !== true).sort(sortItems)
   ]
 
-  // Filter by search query
   const filtered = sorted.filter(item =>
     item.item_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (item.category?.toLowerCase() ?? '').includes(searchQuery.toLowerCase())
