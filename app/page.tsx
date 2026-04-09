@@ -247,7 +247,7 @@ if (loading) return (
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-      <h1>RMQ</h1>
+      <h1>RMQ Stage</h1>
       {isManager && (
         <button
           onClick={openAddModal}
