@@ -19,8 +19,6 @@ type SelectedItem = {
   price: number
 }
 
-usePushNotifications()
-
 const ITEMS_PER_PAGE = 20
 
 export default function Home() {
@@ -39,6 +37,7 @@ export default function Home() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
+  usePushNotifications()
 
   const isAddValid =
     newItem.item_name.trim() !== '' &&
