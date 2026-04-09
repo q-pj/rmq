@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { usePushNotifications } from '@/lib/usePushNotifications'
 
 type Item = {
   id: number
@@ -17,6 +18,8 @@ type SelectedItem = {
   category: string | null
   price: number
 }
+
+usePushNotifications()
 
 const ITEMS_PER_PAGE = 20
 
@@ -130,6 +133,16 @@ export default function Home() {
       category: updatedCategory,
       price: selectedItem.price,
     }).eq('id', selectedItem.id)
+
+    await fetch('/api/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: 'Price List Updated',
+        body: `New price: ${selectedItem.item_name} ${selectedItem.price}`,
+      }),
+    })
+
 
     setItems(items.map(item =>
       item.id === selectedItem.id ? { ...item, ...selectedItem, category: updatedCategory } : item  // 👈 updated

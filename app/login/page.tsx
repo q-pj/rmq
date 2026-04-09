@@ -54,7 +54,7 @@ export default function Login() {
 
   return (
     <main style={{ padding: '16px', maxWidth: '400px', margin: '0 auto' }}>
-      <h1>RMQ</h1>
+      <h1>RMQ Staging</h1>
 
       <input
         type="password"
