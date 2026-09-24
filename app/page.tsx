@@ -51,71 +51,48 @@ export default function Home() {
   }, [items, loading])
 
   useEffect(() => {
-    async function init() {
-      const supabase = createClient()
+  async function init() {
+    const supabase = createClient()
 
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/login')
-        return
-      }
-
-      setIsManager(user.email === 'quintelapj+manager@gmail.com')
-
-      const cached = localStorage.getItem('pricelist')
-      if (cached){
-        setItems(JSON.parse(cached))
-        setLoading(false)
-      }
-
-      const { data } = await supabase.from('pricelist').select('*')
-      if (data) {
-        setItems(data ?? [])
-        localStorage.setItem('pricelist', JSON.stringify(data))
-        setLoading(false)
-      }
-
-      const channel = supabase
-        .channel('pricelist-changes')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'pricelist'
-        }, (payload) => {
-          if (payload.eventType === 'INSERT'){
-            setItems(prev => [...prev, payload.new as Item])
-          }
-          if (payload.eventType === 'UPDATE'){
-            setItems(prev => prev.map(item => 
-              item.id === (payload.new as Item).id ? payload.new as Item : item))
-          }
-          if (payload.eventType === 'DELETE'){
-            setItems(prev => prev.filter(item => item.id !== (payload.old as Item).id))
-          }
-        }).subscribe()
-
-        return () => {
-          supabase.removeChannel(channel)
-        }
-    }
-    init()
-
-    async function handleVisibilityChange() {
-      if (document.visibilityState === 'visible') {
-        const supabase = createClient()
-        const { data } = await supabase.from('pricelist').select('*')
-        setItems(data ?? [])
-      }
+    const cached = localStorage.getItem('pricelist')
+    if (cached) {
+      setItems(JSON.parse(cached))
+      setLoading(false)
     }
 
-    window.addEventListener('focus', handleVisibilityChange)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
+    const [{ data: { user } }, { data }] = await Promise.all([
+      supabase.auth.getUser(),
+      supabase.from('pricelist').select('*'),
+    ])
+
+    if (!user) {
+      router.push('/login')
+      return
+    }
+
+    setIsManager(user.email === 'quintelapj+manager@gmail.com')
+
+    if (data) {
+      setItems(data)
+      localStorage.setItem('pricelist', JSON.stringify(data))
+      setLoading(false)
+    }
+
+    const channel = supabase
+      .channel('pricelist-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'pricelist'
+      }, (payload) => {
+      }).subscribe()
 
     return () => {
-      window.removeEventListener('focus', handleVisibilityChange)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      supabase.removeChannel(channel)
     }
-  }, [])
+  }
+  init()
+}, [])
 
   async function handleUpdate() {
     if (!selectedItem) return
