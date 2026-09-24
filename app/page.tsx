@@ -85,17 +85,16 @@ export default function Home() {
         schema: 'public',
         table: 'pricelist'
       }, (payload) => {
-
-        if (payload.eventType === 'INSERT'){
-            setItems(prev => [...prev, payload.new as Item])
-          }
-          if (payload.eventType === 'UPDATE'){
-            setItems(prev => prev.map(item => 
-              item.id === (payload.new as Item).id ? payload.new as Item : item))
-          }
-          if (payload.eventType === 'DELETE'){
-            setItems(prev => prev.filter(item => item.id !== (payload.old as Item).id))
-          }
+        if (payload.eventType === 'INSERT') {
+          setItems(prev => [...prev, payload.new as Item])
+        }
+        if (payload.eventType === 'UPDATE') {
+          setItems(prev => prev.map(item =>
+            item.id === (payload.new as Item).id ? payload.new as Item : item))
+        }
+        if (payload.eventType === 'DELETE') {
+          setItems(prev => prev.filter(item => item.id !== (payload.old as Item).id))
+        }
       }).subscribe()
 
     return () => {
@@ -105,20 +104,20 @@ export default function Home() {
   init()
 
   async function handleVisibilityChange() {
-      if (document.visibilityState === 'visible') {
-        const supabase = createClient()
-        const { data } = await supabase.from('pricelist').select('*')
-        setItems(data ?? [])
-      }
+    if (document.visibilityState === 'visible') {
+      const supabase = createClient()
+      const { data } = await supabase.from('pricelist').select('*')
+      setItems(data ?? [])
     }
+  }
 
-    window.addEventListener('focus', handleVisibilityChange)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
+  window.addEventListener('focus', handleVisibilityChange)
+  document.addEventListener('visibilitychange', handleVisibilityChange)
 
-    return () => {
-      window.removeEventListener('focus', handleVisibilityChange)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
+  return () => {
+    window.removeEventListener('focus', handleVisibilityChange)
+    document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }
 }, [])
 
   async function handleUpdate() {
